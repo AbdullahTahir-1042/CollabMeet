@@ -11,11 +11,13 @@ router.post('/register', async (req, res) => {
     try {
         // checking existing user
         const existingUser = await User.findOne({ email: req.body.email });
-        existingUser && res.status(404).json({ message: "User already exists!" });
+        if (existingUser) {
+            return res.status(409).json({ message: "User already exists!" });
+        }
 
         // confirming password
         if (req.body.password !== req.body.confirmPassword) {
-            res.status(404).json({ message: "Password and confirm password do not match." });
+            return res.status(400).json({ message: "Password and confirm password do not match." });
         }
 
         // hashing password
@@ -41,12 +43,16 @@ router.post('/login', async (req, res) => {
         // find user in database with request email
         const user = await User.findOne({ email: req.body.email });
         // if email not found
-        !user && res.status(404).json({ message: "User not found!" });
+        if (!user) {
+            return res.status(404).json({ message: "User not found!" });
+        }
 
         // decrypt password from database and compared with password received from request
         const isValidPassword = await bcrypt.compare(req.body.password, user.password);
         // if password is not valid
-        !isValidPassword && res.status(400).json({ message: "Incorrect password!" });
+        if (!isValidPassword) {
+            return res.status(400).json({ message: "Incorrect password!" });
+        }
 
         // if password is valid, generate token
         const token = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
