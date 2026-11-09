@@ -9,8 +9,10 @@ export const signin = (formData, history) => async (dispatch) => {
     dispatch({ type: AUTH, data });
 
     history.push('/');
+    return data;
   } catch (error) {
     console.log(error);
+    return null;
   }
 };
 
@@ -21,7 +23,9 @@ export const signup = (formData, history) => async (dispatch) => {
     dispatch({ type: AUTH, data });
 
     history.push('/');
+    return data;
   } catch (error) {
     console.log(error);
+    return null;
   }
 };
