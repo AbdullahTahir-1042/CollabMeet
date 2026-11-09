@@ -8,6 +8,13 @@ const conversationSchema = new mongoose.Schema({
     messages: {
         type: Array,
         default: []
+    },
+    lastMessage: {
+        type: String,
+        default: ""
+    },
+    lastMessageAt: {
+        type: Date
     }
 },
     { timestamps: true }
