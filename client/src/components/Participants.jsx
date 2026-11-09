@@ -1,69 +1,67 @@
 import React, { useContext } from 'react';
-import { Avatar, Paper } from '@material-ui/core';
-import PanToolIcon from '@material-ui/icons/PanTool';
-import { makeStyles } from '@material-ui/core/styles';
+import { motion } from 'framer-motion';
+import { Box, Chip, Stack, Typography } from '@mui/material';
+import PanToolRoundedIcon from '@mui/icons-material/PanToolRounded';
+import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 
 import { SocketContext } from '../SocketContext';
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: '10px',
-        height: '85vh',
-        width: '20vw',
-        border: '1px solid black',
-        zIndex: '3000',
-        position: 'absolute',
-        top: '10vh',
-        right: '0',
-        overflow: 'auto'
-    },
-    participant: {
-        display: 'flex',
-        padding: '10px',
-        cursor: 'pointer',
-        '&:hover': {
-            backgroundColor: '#eeeeee'
-        }
-    },
-    purple: {
-        color: 'black',
-        backgroundColor: '#6264a7'
-    },
-    userName: {
-        display: 'flex',
-        alignItems: 'center',
-        paddingLeft: '12px',
-        paddingRight: '12px',
-        fontFamily: 'sans-serif'
-    },
-}))
+import UserAvatar from './ui/UserAvatar';
+import EmptyState from './ui/EmptyState';
+import { staggerContainer, staggerItem } from '../styles/variants';
 
 const Participants = () => {
-    const { participantsRef, participantsVisible } = useContext(SocketContext);
+  const { participants } = useContext(SocketContext);
+  const people = participants || [];
 
-    const classes = useStyles();
-
+  if (!people.length) {
     return (
-        <div>
-            {
-                participantsVisible && (
-                    <Paper className={classes.paper}>
-                        {
-                            participantsRef.current.map((p) => (
-                                <div className={classes.participant}>
-                                    <Avatar className={classes.purple} >{p.name.charAt(0)}</Avatar>
-                                    <p className={classes.userName} >{p.name}</p>
-                                    {
-                                        p.handRaised ? <PanToolIcon fontSize="large" /> : <div></div>
-                                    }
-                                </div>
-                            ))
-                        }
-                    </Paper>
-                )
-            }
-        </div>
-    )
-}
+      <EmptyState
+        icon={GroupRoundedIcon}
+        title="No one else here yet"
+        description="Share the meeting link to invite teammates to the call."
+        sx={{ py: 6 }}
+      />
+    );
+  }
 
-export default Participants
+  return (
+    <Stack component={motion.div} variants={staggerContainer} initial="hidden" animate="visible" spacing={0.5} sx={{ p: 1.5 }}>
+      {people.map((participant, index) => (
+        <Box
+          key={`${participant.name}-${index}`}
+          component={motion.div}
+          variants={staggerItem}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: 1,
+            borderRadius: 2,
+            '&:hover': { bgcolor: 'action.hover' },
+          }}
+        >
+          <UserAvatar name={participant.name || 'Guest'} size={38} />
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
+              {participant.name || 'Guest'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {participant.handRaised ? 'Hand raised' : 'In the meeting'}
+            </Typography>
+          </Box>
+          {participant.handRaised ? (
+            <Chip
+              size="small"
+              icon={<PanToolRoundedIcon sx={{ fontSize: '14px !important' }} />}
+              label="Hand"
+              color="warning"
+              variant="outlined"
+            />
+          ) : null}
+        </Box>
+      ))}
+    </Stack>
+  );
+};
+
+export default Participants;
