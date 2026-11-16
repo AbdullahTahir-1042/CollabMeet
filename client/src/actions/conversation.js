@@ -10,8 +10,10 @@ export const getUserConversations = () => async (dispatch) => {
     try {
         const { data } = await api.getConversations();
         dispatch({ type: GET_ALL, payload: data });
+        return data;
     } catch (error) {
         console.log(error);
+        return null;
     }
 }
 
@@ -19,8 +21,10 @@ export const createConversation = (convo) => async (dispatch) => {
     try {
         const { data } = await api.createConversation(convo);
         dispatch({ type: CREATE, payload: data });
+        return data;
     } catch (error) {
         console.log(error);
+        return null;
     }
 }
 
@@ -28,7 +32,9 @@ export const getConversation = (chatId) => async (dispatch) => {
     try {
         const { data } = await api.getUserConversation(chatId);
         dispatch({ type: GET_CONVO, payload: data });
+        return data;
     } catch (error) {
         console.log(error);
+        return null;
     }
 }

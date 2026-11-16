@@ -1,52 +1,75 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import { motion } from 'framer-motion';
+import { Box, Typography } from '@mui/material';
 
-import chat_icon from '../assets/chat_icon.png';
+import UserAvatar from './ui/UserAvatar';
+import { relativeTime } from '../utils/format';
+import { staggerItem } from '../styles/variants';
 
-const useStyles = makeStyles((theme) => ({
-    conversation: {
+const Conversation = ({ conversation, active, onClick }) => {
+  const name = conversation?.conversationName || 'New Meeting';
+  const preview = conversation?.lastMessage || 'No messages yet';
+  const timestamp = conversation?.lastMessageAt || conversation?.createdAt;
+
+  return (
+    <Box
+      component={motion.button}
+      type="button"
+      onClick={onClick}
+      variants={staggerItem}
+      whileTap={{ scale: 0.99 }}
+      aria-current={active ? 'true' : undefined}
+      sx={{
+        position: 'relative',
         display: 'flex',
-        backgroundColor: '#eeeeee',
         alignItems: 'center',
-        padding: '10px',
-        cursor: 'pointer',
-        '&:hover': {
-            backgroundColor: '#ffffff'
-        }
-    },
-
-    conversationImg: {
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        objectFit: 'cover',
-        marginRight: '20px'
-    },
-
-    conversationName: {
-        fontWeight: 'bold',
-        fontFamily: 'sans-serif'
-    },
-
-    separator: {
+        gap: 1.5,
+        width: '100%',
+        textAlign: 'left',
         border: 'none',
-        borderBottom: '1px solid black',
-        margin: '0 10px'
-    }
-}));
+        fontFamily: 'inherit',
+        cursor: 'pointer',
+        p: 1.25,
+        borderRadius: 2,
+        bgcolor: active ? 'action.selected' : 'transparent',
+        transition: 'background-color 160ms ease',
+        '&:hover': { bgcolor: active ? 'action.selected' : 'action.hover' },
+      }}
+    >
+      {active ? (
+        <Box
+          component={motion.span}
+          layout
+          sx={{
+            position: 'absolute',
+            left: 0,
+            top: 12,
+            bottom: 12,
+            width: 3,
+            borderRadius: 999,
+            bgcolor: 'primary.main',
+          }}
+          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        />
+      ) : null}
 
-const Conversation = (conversation) => {
-    const classes = useStyles();
+      <UserAvatar name={name} size={46} />
 
-    return (
-        <>
-            <div className={classes.conversation}>
-                <img className={classes.conversationImg} src={chat_icon} alt="Conversation Icon" />
-                <span className={classes.conversationName}>{conversation.conversation.conversationName}</span>
-            </div>
-            <hr className={classes.separator} />
-        </>
-    );
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600, flex: 1 }}>
+            {name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+            {relativeTime(timestamp)}
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" noWrap sx={{ mt: 0.25 }}>
+          {preview}
+        </Typography>
+      </Box>
+    </Box>
+  );
 };
 
 export default Conversation;

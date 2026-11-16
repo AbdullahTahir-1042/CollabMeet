@@ -1,53 +1,114 @@
 import React, { useContext } from 'react';
-import { Button, Paper } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Box, Button, Typography } from '@mui/material';
+import CallRoundedIcon from '@mui/icons-material/CallRounded';
+import CallEndRoundedIcon from '@mui/icons-material/CallEndRounded';
 
 import { SocketContext } from '../SocketContext';
+import UserAvatar from './ui/UserAvatar';
+import { modalPop } from '../styles/variants';
+import { shadows } from '../styles/tokens';
 
-const useStyles = makeStyles((theme) => ({
-    notification: {
-        zIndex: '2000',
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)'
-    },
-    paper: {
-        display: 'flex',
-        justifyContent: 'center',
-        padding: '10px',
-        fontFamily: 'sans-serif'
-    }
-}));
+const PulsingRings = ({ children }) => (
+  <Box sx={{ position: 'relative', width: 124, height: 124, display: 'grid', placeItems: 'center', mx: 'auto' }}>
+    {[0, 0.6].map((delay) => (
+      <Box
+        key={delay}
+        component={motion.span}
+        initial={{ scale: 0.8, opacity: 0.5 }}
+        animate={{ scale: 1.9, opacity: 0 }}
+        transition={{ duration: 2, repeat: Infinity, delay, ease: 'easeOut' }}
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '50%',
+          border: '2px solid',
+          borderColor: 'primary.main',
+        }}
+      />
+    ))}
+    <Box sx={{ position: 'relative', zIndex: 1 }}>{children}</Box>
+  </Box>
+);
 
-// component used to pop notifications to users depending on context
 const Notifications = () => {
-    const { answerCall, call, callAccepted, callJoined, callFull } = useContext(SocketContext);
-    const classes = useStyles();
-    return (
-        <div className={classes.notification}>
-            {call.isReceivedCall && !callAccepted && (
-                <Paper className={classes.paper}>
-                    <h1>{call.name} is calling: &nbsp; &nbsp; &nbsp;</h1>
-                    <Button variant="contained" color="primary" onClick={answerCall}>
-                        Answer
-                    </Button>
-                </Paper>
-            )}
+  const { call, callAccepted, answerCall, declineCall } = useContext(SocketContext);
+  const open = Boolean(call?.isReceivedCall) && !callAccepted && typeof answerCall === 'function';
 
-            {callJoined && !callAccepted && (
-                <Paper className={classes.paper}>
-                    <h1>Waiting for host to let you in...</h1>
-                </Paper>
-            )}
+  return (
+    <AnimatePresence>
+      {open ? (
+        <Box
+          key="incoming-call"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 2000,
+            display: 'grid',
+            placeItems: 'center',
+            bgcolor: 'rgba(8,10,15,0.55)',
+            backdropFilter: 'blur(6px)',
+            p: 2,
+          }}
+        >
+          <Box
+            component={motion.div}
+            variants={modalPop}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            role="dialog"
+            aria-label="Incoming call"
+            sx={{
+              width: 'min(92vw, 400px)',
+              bgcolor: 'background.paper',
+              borderRadius: '28px',
+              p: 4,
+              textAlign: 'center',
+              boxShadow: shadows.stage,
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <PulsingRings>
+              <UserAvatar name={call.name || 'Guest'} size={84} />
+            </PulsingRings>
+            <Typography variant="h5" sx={{ mt: 2 }}>
+              {call.name || 'Someone'} is calling
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5, mt: 0.5 }}>
+              Incoming video call
+            </Typography>
 
-            {callFull && (
-                <Paper className={classes.paper}>
-                    <h1>The call is currently full. Please join later.</h1>
-                </Paper>
-            )}
-        </div>
-    );
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              <Button
+                fullWidth
+                size="large"
+                variant="contained"
+                color="error"
+                startIcon={<CallEndRoundedIcon />}
+                onClick={declineCall}
+                sx={{ py: 1.2 }}
+              >
+                Decline
+              </Button>
+              <Button
+                fullWidth
+                size="large"
+                variant="contained"
+                color="success"
+                startIcon={<CallRoundedIcon />}
+                onClick={answerCall}
+                sx={{ py: 1.2, bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
+              >
+                Answer
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      ) : null}
+    </AnimatePresence>
+  );
 };
 
 export default Notifications;

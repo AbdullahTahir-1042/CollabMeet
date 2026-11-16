@@ -1,80 +1,83 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { Paper, Typography, Grid, Button, TextField } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import React from 'react';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import { useSnackbar } from 'notistack';
 
-import { createConversation } from '../actions/conversation';
+import UserAvatar from './ui/UserAvatar';
+import { shadows } from '../styles/tokens';
 
-const useStyles = makeStyles((theme) => ({
-    container: {
-        backgroundColor: '#6264a7',
-        color: '#ffffff',
-        padding: '10px'
-    },
-    button: {
-        margin: '0px 4px'
+const buildMeetingLink = (chatId) => `${window.location.href.split('#')[0]}#/meeting/${chatId}`;
+
+const ChatTopBar = ({ convoName = '', chatId, showBack = false, onBack }) => {
+  const { enqueueSnackbar } = useSnackbar();
+
+  const joinCall = () => {
+    if (!chatId) return;
+    window.open(buildMeetingLink(chatId), '_blank', 'noopener,noreferrer');
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(buildMeetingLink(chatId));
+      enqueueSnackbar('Meeting link copied', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Could not copy link', { variant: 'error' });
     }
-}))
+  };
 
-const ChatTopBar = ({ convoName, chatId }) => {
-    const classes = useStyles();
-    const dispatch = useDispatch();
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        px: { xs: 1.25, md: 2.5 },
+        py: 1.25,
+        minHeight: 68,
+        bgcolor: 'background.paper',
+        borderBottom: 1,
+        borderColor: 'divider',
+        boxShadow: shadows.sm,
+        zIndex: 2,
+      }}
+    >
+      {showBack ? (
+        <IconButton onClick={onBack} aria-label="Back to chats">
+          <ArrowBackRoundedIcon />
+        </IconButton>
+      ) : null}
 
-    // form data for starting new conversation
-    const [isFormVisible, setIsFormVisible] = useState(false);
-    const [formData, setFormData] = useState({
-        conversationName: ""
-    });
+      <UserAvatar name={convoName || 'Conversation'} size={40} />
 
-    // submit new conversation form data
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        dispatch(createConversation(formData));
-        setFormData({ ...formData, conversationName: "" });
-    }
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
+          {convoName || 'Conversation'}
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <Typography variant="caption" color="text.secondary">
+          Direct message
+        </Typography>
+      </Box>
+      </Box>
 
-    // to join the corresponding video call to chat in new tab
-    const redirectToVideo = () => {
-        const win = window.open('/MS-Teams-Clone#/video-call/' + chatId);
-        win.focus();
-    }
-
-    return (
-        <div>
-            <div className={classes.container}>
-                <Grid container>
-                    <Grid item xs={7}>
-                        <Typography variant='h6'>
-                            {convoName}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={1}>
-
-                    </Grid>
-                    <Grid item xs={4}>
-                        <Button className={classes.button} variant='contained' onClick={redirectToVideo}>Join Call</Button>
-                        <Button className={classes.button} variant='contained' onClick={() => setIsFormVisible(!isFormVisible)}>New Meeting</Button>
-                    </Grid>
-                </Grid>
-            </div>
-            {
-                isFormVisible && (
-                    <form autoComplete="off">
-                        <Paper style={{ marginTop: '10px' }}>
-                            <Grid container spacing={2} justify="center">
-                                <Grid item xs={7}>
-                                    <TextField name="conversationName" required value={formData.conversationName} label="Meeting name" fullWidth onChange={(e) => setFormData({ ...formData, conversationName: e.target.value })} />
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Button type="submit" color="primary" className={classes.button} variant='contained' style={{ marginTop: '10px' }} onClick={handleSubmit}>Start Call</Button>
-                                </Grid>
-                            </Grid>
-                        </Paper>
-                    </form>
-                )
-            }
-        </div>
-    );
+      {chatId ? (
+        <>
+          <Tooltip title="Copy meeting link">
+            <IconButton onClick={copyLink} aria-label="Copy meeting link">
+              <ContentCopyRoundedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Join video call">
+            <IconButton onClick={joinCall} aria-label="Join video call" sx={{ bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.dark' } }}>
+              <VideocamRoundedIcon />
+            </IconButton>
+          </Tooltip>
+        </>
+      ) : null}
+    </Box>
+  );
 };
 
 export default ChatTopBar;
